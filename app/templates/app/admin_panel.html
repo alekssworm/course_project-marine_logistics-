@@ -1,0 +1,209 @@
+{% extends "app/layout.html"%}
+        {% block content %}
+
+
+
+<h1>Admin Panel</h1>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}" {% endif %}>
+        {{ message }}</li>
+        {% endfor %}
+</ul>
+{% endif %}
+
+
+<h2>Writing Contracts</h2>
+
+<button id="toggleContractsTable">Toggle Contracts Table</button>
+
+<table class="data-table contracts-table">
+    <thead>
+        <tr>
+            <th>Contract ID</th>
+            <th>Cargo Quantity</th>
+            <th>Type of Cargo</th>
+            <th>Port with Cargo</th>
+            <th>Port Final Destination</th>
+            <th>Temperature Mode</th>
+            <th>In Work</th>
+            <th>Completion</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contract in contracts %}
+        <tr>
+            <td>{{ contract.contract_id }}</td>
+            <td>{{ contract.cargo_quantity }}</td>
+            <td>{{ contract.type_of_cargo }}</td>
+            <td>{{ contract.port_id_with_cargo.port_name }}</td>
+            <td>{{ contract.port_final_destination.port_name }}</td>
+            <td>{{ contract.temperature_mode }}</td>
+            <td>{{ contract.in_work }}</td>
+            <td>{{ contract.completed }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<h2>Create Assignment</h2>
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="assignment_form">
+
+    Contract ID:
+    <select name="contract" required>
+        <option value="" selected>Choose a Contract</option>
+        {% for contract in contracts %}
+        {% if not contract.in_work %}
+        <option value="{{ contract.contract_id }}">{{ contract.contract_id }} - {{ contract.cargo_quantity }} - {{ contract.type_of_cargo }}</option>
+        {% endif %}
+        {% endfor %}
+    </select><br>
+
+    Ship ID:
+    <select name="ship_table" required>
+        <option value="" selected>Choose a Ship</option>
+        {% for ship in ships %}
+        <option value="{{ ship.ship_table_id }}">{{ ship.ship_table_id }} - {{ ship.ship_tonnage }} - {{ ship.ship_type }}</option>
+        {% endfor %}
+    </select><br>
+
+    <input type="submit" name="create_assignment" value="Create Assignment">
+</form>
+
+
+
+<h2>Assignments</h2>
+<button id="toggleAssignmentsTable">Toggle Assignments Table</button>
+<table class="data-table assignments-table">
+
+    <tr>
+        <th>Contract</th>
+        <th>Ship</th>
+        <th>Vessel Load Calculation</th>
+    </tr>
+    {% for assignment in assignments %}
+    <tr>
+        <td>{{ assignment.contract }}</td>
+        <td>{{ assignment.ship_table }}</td>
+        <td>{{ assignment.vessel_load_calculation}}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Create Route</h2>
+<form method="post">
+    {% csrf_token %}
+
+    Ship ID:
+    <select name="ship_id" required>
+        <option value="" selected>Choose a Ship</option>
+        {% regroup assignments by ship_table as unique_ships %}
+        {% for unique_ship in unique_ships %}
+        <option value="{{ unique_ship.list.0.ship_table_id}}">{{ unique_ship.grouper }} - {{ unique_ship.list.0.ship_table_id }}</option>
+        {% endfor %}
+    </select><br>
+
+    <button type="submit" name="create_route_ships">Create Route</button>
+</form>
+
+
+
+<h2>Route Ships</h2>
+<button id="toggleRouteShipsTable">Toggle Route Ships Table</button>
+<table class="data-table route-ships-table">
+    <thead>
+        <tr>
+            <th>Route Key</th>
+            <th>Ship</th>
+            <th>From Port</th>
+            <th>To Port</th>
+            <th>Voyage Duration</th>
+            <th>Time to Port</th>
+            <th>Order Completed</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for route in routes %}
+        <tr>
+            <td>{{ route.route_key }}</td>
+            <td>{{ route.ship_table }}</td>
+            <td>{{ route.from_the_port }}</td>
+            <td>{{ route.to_the_port }}</td>
+            <td>{{ route.voyage_duration }}</td>
+            <td>{{ route.time_to_port }}</td>
+            <td>{{ route.order_completed }}</td>
+            <td>
+                {% if not route.order_completed %}
+                <form method="post" action="{% url 'change_order_completed' route.pk %}">
+                    {% csrf_token %}
+                    <button type="submit">Mark Completed</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8">No routes available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#toggleContractsTable").click(function () {
+            $(".contracts-table").toggle();
+        });
+
+        $("#toggleAssignmentsTable").click(function () {
+            $(".assignments-table").toggle();
+        });
+
+        $("#toggleRouteShipsTable").click(function () {
+            $(".route-ships-table").toggle();
+        });
+    });
+</script>
+
+
+
+
+
+
+<style>
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+
+        .data-table td[colspan="4"],
+        .data-table td[colspan="5"] {
+            text-align: center;
+        }
+</style>
+
+        {% endblock %}
+
+
+
+
+
+

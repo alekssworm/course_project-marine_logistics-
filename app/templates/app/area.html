@@ -1,0 +1,389 @@
+﻿{% extends "app/layout.html"%}
+{% block content %}
+
+
+<script>
+
+    window.onload = function () {
+        $('#messageModal').modal('show');
+    };
+</script>
+
+
+<!DOCTYPE html>
+<html style="font-size: 16px;" lang="ru">
+<head>
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+            body .data-table,
+            body .list-payment-table {
+                overflow-x: auto;
+                white-space: nowrap;
+                width: 100%;
+                margin: 30px 15px 0 15px;
+                border-collapse: collapse;
+                background-color: rgba(255, 255, 255, 0.10);
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+
+                body .data-table th,
+                body .data-table td,
+                body .list-payment-table th,
+                body .list-payment-table td {
+                    min-width: 50px;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    padding: 12px;
+                    text-align: left;
+                    border-bottom: 1px solid #ddd;
+                }
+
+                body .data-table th {
+                    background-color: #4caf50;
+                    color: white;
+                }
+
+                body .data-table td {
+                    color: black;
+                }
+
+                body .data-table tbody tr:hover {
+                    background-color: rgba(0, 0, 0, 0.1);
+                }
+
+                body .list-payment-table th {
+                    background-color: #4caf50;
+                    color: white;
+                }
+
+                body .list-payment-table td {
+                    color: black;
+                }
+
+                body .list-payment-table tbody tr:hover {
+                    background-color: rgba(0, 0, 0, 0.1);
+                }
+
+                body .list-payment-table button {
+                    padding: 8px 12px;
+                    background-color: #4caf50;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                    body .list-payment-table button:hover {
+                        background-color: #45a049;
+                    }
+
+
+
+        .overlay {
+            position: relative;
+            display: inline-block;
+        }
+
+        .content-on-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: white;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .contract-form {
+            max-width: 400px;
+            margin: 20px;
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+            input[type="submit"] {
+                background-color: #4caf50;
+                color: white;
+                cursor: pointer;
+            }
+
+                input[type="submit"]:hover {
+                    background-color: #45a049;
+                }
+
+        body {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .black-rectangle {
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            height: auto;
+            width: 400px;
+            top: 30px !important;
+            right: 20px !important;
+            position: fixed !important;
+            box-sizing: border-box;
+            overflow: hidden;
+            color: white;
+            margin-top: 40px;
+            z-index: 999;
+        }
+
+
+            .black-rectangle button {
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: -30px;
+            }
+
+                .black-rectangle button:hover {
+                    background-color: #45a049;
+                }
+
+
+
+        .black-rectangle-content {
+            text-align: center;
+            font-size: 16px;
+        }
+
+            .black-rectangle-content p {
+                margin-bottom: 10px;
+                font-size: calc(16px + 5px);
+                color: #00FF00;
+                text-align: center;
+            }
+
+            .black-rectangle-content li:nth-last-child(2) {
+                color: red;
+            }
+    </style>
+
+
+
+</head>
+<body data-path-to-root="./" data-include-products="false" class="u-body u-xl-mode" data-lang="ru">
+    <section class="u-align-center u-clearfix u-container-align-center u-section-1" id="sec-d6ee">
+    </section>
+
+    <section class="u-align-left u-clearfix u-image u-section-2 overlay" id="sec-1ca2" data-image-width="2176" data-image-height="1792">
+        <img src="../../static/app/images/cyberpunk.jpg" alt="Cyberpunk Image" id="contractImage">
+        <div class="content-on-image">
+
+
+            <h2>Create Contract</h2>
+            <form method="post" accept-charset="UTF-8">
+                {% csrf_token %}
+                <input type="hidden" name="contract_form" value="1">
+                Cargo Quantity: <input type="number" name="cargo_quantity"><br>
+                Type of cargo :
+                <select name="type_of_cargo">
+                    <option value="gases">Gases</option>
+                    <option value="containers">Containers</option>
+                    <option value="liquid">Liquid</option>
+                </select><br>
+
+                Port with Cargo:
+                <select name="port_id_with_cargo">
+                    <option value="" selected>Choose a port with cargo</option>
+                    {% for port in ports %}
+                    <option value="{{ port.port_table_id }}">{{ port.port_name }}</option>
+                    {% endfor %}
+                </select><br>
+
+                Port Final Destination:
+                <select name="port_final_destination">
+                    <option value="" selected>Choose a port final destination</option>
+                    {% for port in ports %}
+                    <option value="{{ port.port_table_id }}">{{ port.port_name }}</option>
+                    {% endfor %}
+                </select><br>
+
+                Temperature Mode:
+                <select name="temperature_mode">
+                    <option value="Chilled">Chilled</option>
+                    <option value="Do not heat higher">Do not heat higher</option>
+                    <option value="Store at">Store at</option>
+                </select><br>
+
+                temperature_value :
+                <input type="number" name="temperature_value"><br>
+
+                temperature_unit:
+                <select name="temperature_unit">
+                    <option value="K">K</option>
+                    <option value="F">F</option>
+                    <option value="C">C</option>
+                </select><br>
+                <input type="submit" value="Create">
+            </form>
+
+            <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+            <script>
+                $(document).ready(function () {
+                    $("#toggleButton").click(function () {
+                        $("#orderSteps").toggle();
+                        $("#toggleButton").text(function (_, oldText) {
+                            return oldText === "→" ? "X" : "→";
+                        });
+                    });
+
+
+                    $("#orderSteps").show();
+                });
+            </script>
+
+            <div class="black-rectangle">
+                <div class="black-rectangle-content">
+                    <p>
+                        <button id="toggleButton">X</button>
+                        <span id="toggleText">Creating an order</span>
+                    </p>
+                    <ol id="orderSteps">
+                        <li>1 Indicate in the Cargo Quantity field: the quantity of goods that you need to transfer, the maximum quantity is 300 tons</li>
+                        <li>2 Indicate in the Type of Cargo field: the type of your goods</li>
+                        <li>3 Indicate Port with Cargo and Port Final Destination for your item</li>
+                        <li>4 Indicate the conditions for transporting your goods (Temperature Mode, Temperature Value, Temperature Unit) if necessary</li>
+                        <li>5 Click on the create button</li>
+                        <li>6 Pay for the order by clicking on the pay button in the action column in the List Payment table</li>
+                        <li>! Please note that we will not consider your order until it has been paid for</li>
+                        <li>7 Wait for your order to arrive. We will notify you when it arrives</li>
+                    </ol>
+                </div>
+            </div>
+
+
+
+
+            <table class="data-table contracts-table">
+
+                <thead>
+                    <tr>
+                        <th>Contract ID</th>
+                        <th>Cargo Quantity</th>
+                        <th>Type of Cargo</th>
+                        <th>Port with Cargo</th>
+                        <th>Port Final Destination</th>
+                        <th>Temperature Mode</th>
+                        <th>In Work</th>
+                        <th>Completion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contract in contracts %}
+                    <tr>
+                        <td>{{ contract.contract_id }}</td>
+                        <td>{{ contract.cargo_quantity }}</td>
+                        <td>{{ contract.type_of_cargo }}</td>
+                        <td>{{ contract.port_id_with_cargo.port_name }}</td>
+                        <td>{{ contract.port_final_destination.port_name }}</td>
+                        <td>{{ contract.temperature_mode }}</td>
+                        <td>{{ contract.in_work }}</td>
+                        <td>{{ contract.completed }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+            <h2>List Payment</h2>
+            <table class="list-payment-table">
+                <tr>
+                    <th>ID contract</th>
+                    <th>amount</th>
+                    <th>action</th>
+                </tr>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.contract.contract_id }}</td>
+                    <td>{{ payment.amount }}</td>
+                    <td>
+                        {% if not payment.payment_made %}
+                        <form method="post" id="payForm{{ payment.payment_id }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="contract_form" value="0">
+                            <input type="hidden" name="payment_id" value="{{ payment.payment_id }}">
+                            <button type="button" onclick="payPayment('{{ payment.payment_id }}')">Pay</button>
+                        </form>
+                        {% else %}
+                        Paid on {{ payment.payment_date|date:"F d, Y" }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+
+
+        </div>
+    </section>
+    <div class="black-rectangle"></div>
+
+
+</body>
+</html>
+
+<script>
+    function payPayment(paymentId) {
+        if (confirm('Are you sure you want to pay?')) {
+            document.getElementById('payForm' + paymentId).submit();
+        }
+    }
+</script>
+<script>
+
+    function submitForm() {
+
+        console.log("Form submitted with data:", $("#contractForm").serialize());
+
+
+        var formDataDiv = $("<div>").text("Form data: " + $("#contractForm").serialize());
+        $("body").append(formDataDiv);
+    }
+
+
+    $("#contractForm").submit(function (event) {
+
+        event.preventDefault();
+
+
+        submitForm();
+    });
+</script>
+
+{% endblock %}

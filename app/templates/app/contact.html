@@ -1,0 +1,61 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<!-- contracts.html -->
+
+<h2>Writing Contracts</h2>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Contract ID</th>
+            <th>Cargo Quantity</th>
+            <th>Type of Cargo</th>
+            <th>Port with Cargo</th>
+            <th>Port Final Destination</th>
+            <th>Temperature Mode</th>
+            <th>In Work</th>
+            <th>Completion</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contract in contracts %}
+        <tr>
+            <td>{{ contract.contract_id }}</td>
+            <td>{{ contract.cargo_quantity }}</td>
+            <td>{{ contract.type_of_cargo }}</td>
+            <td>{{ contract.port_id_with_cargo.port_name }}</td>
+            <td>{{ contract.port_final_destination.port_name }}</td>
+            <td>{{ contract.temperature_mode }}</td>
+            <td>{{ contract.in_work }}</td>
+            <td>{{ contract.completed }}</td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+</table>
+
+<style>
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+
+        .data-table td[colspan="4"],
+        .data-table td[colspan="5"] {
+            text-align: center;
+        }
+</style>
+{% endblock %}

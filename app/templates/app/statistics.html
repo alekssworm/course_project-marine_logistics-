@@ -1,0 +1,23 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<h2>Statistics</h2>
+
+<!-- Bar chart for cargo quantity -->
+<div>
+    {{ plot_div|safe }}
+</div>
+
+<!-- Display cargo quantity for the selected month -->
+{% if selected_month %}
+<h3>Cargo Quantity for Selected Month ({{ selected_month }})</h3>
+<p>Total Cargo Quantity: {{ cargo_quantity_details }}</p>
+{% endif %}
+
+<!-- Vertical bar chart for cargo distribution -->
+<div>
+    {{ plot_div_vertical_bar|safe }}
+</div>
+
+{% endblock %}

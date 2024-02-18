@@ -1,0 +1,69 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+<h2>Create Port</h2>
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="port_form">
+    Port Name: <input type="text" name="port_name"><br>
+    Port Latitude: <input type="text" name="port_latitude"><br>
+    Port Longitude: <input type="text" name="port_longitude"><br>
+    <input type="submit" value="Create Port">
+</form>
+
+<h1>Ports</h1>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Port Name</th>
+            <th>Port Latitude</th>
+            <th>Port Longitude</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for port in ports %}
+        <tr>
+            <td>{{ port.port_table_id }}</td>
+            <td>{{ port.port_name }}</td>
+            <td>{{ port.port_latitude }}</td>
+            <td>{{ port.port_longitude }}</td>
+            <td>
+                <a href="{% url 'delete_port' port.port_table_id %}" onclick="return confirm('Are you sure you want to delete this Port ?')">Delete</a>
+                <a href="{% url 'edit_port' port.port_table_id %}">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No ports available</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<style>
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+
+        .data-table td[colspan="4"],
+        .data-table td[colspan="5"] {
+            text-align: center;
+        }
+</style>
+{% endblock %}
