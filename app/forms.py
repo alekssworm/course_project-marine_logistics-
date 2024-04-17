@@ -45,3 +45,4 @@ class EditShipForm(forms.ModelForm):
         model = Ship
         fields = ['name_of_vessel', 'ship_tonnage', 'ship_type', 'home_port', 'average_speed','crew']  # Adjust fields as needed
 
+

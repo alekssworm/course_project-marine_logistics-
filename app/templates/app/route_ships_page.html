@@ -1,0 +1,72 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+{% for route_group in route_groups %}
+<h3>{{ route_group.route_key }}</h3>
+<button id="toggleRouteShipsTable{{ route_group.route_key }}">Toggle Route Ships Table</button>
+<table class="data-table route-ships-table" id="routeShipsTable{{ route_group.route_key }}">
+    <thead>
+        <tr>
+            <th>Route Key</th>
+            <th>Ship</th>
+            <th>From Port</th>
+            <th>To Port</th>
+            <th>Voyage Duration</th>
+            <th>Time to Port</th>
+            <th>Order Completed</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for route in route_group.routes %}
+        <tr>
+            <td>{{ route.route_key }}</td>
+            <td>{{ route.ship_table }}</td>
+            <td>{{ route.from_the_port }}</td>
+            <td>{{ route.to_the_port }}</td>
+            <td>{{ route.voyage_duration }}</td>
+            <td>{{ route.time_to_port }}</td>
+            <td>{{ route.order_completed }}</td>
+            <td>
+                {% if not route.order_completed and forloop.index == 1 %}
+                <form method="post" action="{% url 'change_completed' route.pk %}">
+                    {% csrf_token %}
+                    <button type="submit">Mark Completed</button>
+                </form>
+                {% elif not route.order_completed and forloop.index > 1 and not route_group.routes|slice:":forloop.index"|any:"order_completed" %}
+                
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+
+
+
+
+<style>
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+
+        .data-table td[colspan="4"],
+        .data-table td[colspan="5"] {
+            text-align: center;
+        }
+</style>
+{% endblock %}

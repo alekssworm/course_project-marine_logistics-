@@ -69,6 +69,7 @@
     <Content Include="app\templates\app\edit_ship.html" />
     <Content Include="app\templates\app\port.html" />
     <Content Include="app\templates\app\register.html" />
+    <Content Include="app\templates\app\route_ships_page.html" />
     <Content Include="app\templates\app\ship.html" />
     <Content Include="app\templates\app\statistics.html" />
     <Content Include="requirements.txt" />

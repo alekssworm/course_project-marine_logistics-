@@ -112,6 +112,7 @@
 
 
 
+
 <h2>Route Ships</h2>
 <button id="toggleRouteShipsTable">Toggle Route Ships Table</button>
 <table class="data-table route-ships-table">
@@ -124,7 +125,7 @@
             <th>Voyage Duration</th>
             <th>Time to Port</th>
             <th>Order Completed</th>
-            <th>Action</th>
+            
         </tr>
     </thead>
     <tbody>
@@ -137,14 +138,7 @@
             <td>{{ route.voyage_duration }}</td>
             <td>{{ route.time_to_port }}</td>
             <td>{{ route.order_completed }}</td>
-            <td>
-                {% if not route.order_completed %}
-                <form method="post" action="{% url 'change_order_completed' route.pk %}">
-                    {% csrf_token %}
-                    <button type="submit">Mark Completed</button>
-                </form>
-                {% endif %}
-            </td>
+            
         </tr>
         {% empty %}
         <tr>

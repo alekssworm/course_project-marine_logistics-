@@ -162,10 +162,6 @@ class RouteShip(models.Model):
 
 
 
-        
-
-
-
 class ShippingCost(models.Model):
     cargo_type = models.CharField(max_length=100, unique=True)
     cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2)

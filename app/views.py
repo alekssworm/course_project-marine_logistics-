@@ -527,6 +527,9 @@ def admin_panel(request):
     return render(request, 'app/admin_panel.html', context)
    
 
+
+
+
 from django.shortcuts import render, redirect
 from .models import Port, Ship, WritingAContract, Assignment, RouteShip
 from django.utils import timezone
@@ -540,7 +543,9 @@ from django.db.models import Max
 
 
 def generate_route_key(path_index, stop_index):
-    return f"{path_index}-{stop_index}"
+    return f"{stop_index}-{path_index}"
+
+
 
 def create_route_ships_logic(ship_id, generate_route_key):
     ship = Ship.objects.get(pk=ship_id)
@@ -551,64 +556,55 @@ def create_route_ships_logic(ship_id, generate_route_key):
 
     with transaction.atomic():
         last_route = RouteShip.objects.filter(ship_table=ship).order_by('-route_key').first()
-        
+
         if not last_route:
             path_index = 1
         else:
             last_route_parts = last_route.route_key.split('-')
             path_index = int(last_route_parts[0]) + 1 if len(last_route_parts) > 0 else 1
 
-        stop_index = 1  # Сбросим stop_index для каждого нового path_index
-
         last_time_to_port = timezone.now()
-        created_paths = set()  # Словарь для отслеживания уже созданных путей
+        created_paths = set()
 
         for contract in contracts:
             current_path = f"{contract.port_id_with_cargo_id}-{contract.port_final_destination_id}"
 
             if current_path not in created_paths:
+                stop_index = 1
                 if ship.home_port_id != contract.port_id_with_cargo_id:
-                    last_time_to_port, stop_index = create_route(ship, ship.home_port_id, contract.port_id_with_cargo_id, last_time_to_port, path_index, stop_index, generate_route_key)
+                    last_time_to_port, stop_index, path_index = create_route(ship, ship.home_port_id, contract.port_id_with_cargo_id, last_time_to_port, path_index, stop_index, generate_route_key)
 
-                last_time_to_port, stop_index = create_route(ship, contract.port_id_with_cargo_id, contract.port_final_destination_id, last_time_to_port, path_index, stop_index, generate_route_key)
+                last_time_to_port, stop_index, path_index = create_route(ship, contract.port_id_with_cargo_id, contract.port_final_destination_id, last_time_to_port, path_index, stop_index, generate_route_key)
 
                 ship.home_port_id = contract.port_final_destination_id
                 created_paths.add(current_path)
 
-            contract.completed = True
-            contract.save()
-            # Здесь path_index не увеличивается, чтобы все маршруты имели одинаковый path_index
-            stop_index = 1
+        # Здесь path_index увеличивается на 1 для каждого нового маршрута
+        path_index += 1
 
         assignments_to_delete = Assignment.objects.filter(ship_table_id=ship_id)
         assignments_to_delete.delete()
+
     return redirect('admin_panel')
-
-
 
 
 def create_route(ship, from_port_id, to_port_id, last_time_to_port, path_index, stop_index, generate_route_key):
     from_port = Port.objects.get(pk=from_port_id)
     to_port = Port.objects.get(pk=to_port_id)
-    
+
     from_coords = (from_port.port_latitude, from_port.port_longitude)
     to_coords = (to_port.port_latitude, to_port.port_longitude)
-    
+
     distance = geodesic(from_coords, to_coords).kilometers
     voyage_duration = calculate_voyage_duration(distance, ship.average_speed)
-    
-    # Обновляем time_to_port на основе времени прибытия в последний порт
-    time_to_port = last_time_to_port + timedelta(hours=voyage_duration)
 
-    # Generate a unique route_key
+    time_to_port = last_time_to_port + timedelta(hours=voyage_duration)
     route_key = generate_route_key(path_index, stop_index)
-    
-    # Ensure the route_key is unique
+
     while RouteShip.objects.filter(route_key=route_key).exists():
         stop_index += 1
         route_key = generate_route_key(path_index, stop_index)
 
-    # Создаем запись в модели RouteShip
     RouteShip.objects.create(
         ship_table=ship,
         from_the_port=from_port,
@@ -619,13 +615,50 @@ def create_route(ship, from_port_id, to_port_id, last_time_to_port, path_index, 
         route_key=route_key
     )
 
-    # Возвращаем обновленное время прибытия в порт и новый индекс остановок в порту
-    return time_to_port, stop_index + 1
+    # Увеличиваем path_index при каждом новом маршруте
+    path_index += 1
+
+    return time_to_port, stop_index, path_index
 
 
 def calculate_voyage_duration(distance, average_speed):
     average_speed_float = float(average_speed)
     return distance / average_speed_float if average_speed_float else 0
+
+
+from django.shortcuts import render, redirect
+from .models import RouteShip
+
+from django.shortcuts import render
+from .models import RouteShip
+
+def route_ships_page(request):
+    routes = RouteShip.objects.all()
+
+    # Группировка маршрутов по ключу маршрута
+    route_groups = {}
+    for route in routes:
+        route_key = route.route_key.split('-')[0]  # Получаем часть маршрута до тире
+        if route_key not in route_groups:
+            route_groups[route_key] = {'route_key': route_key, 'routes': []}
+        route_groups[route_key]['routes'].append(route)
+
+    return render(request, 'app/route_ships_page.html', {'route_groups': route_groups.values()})
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import RouteShip
+
+def change_completed(request, pk):
+    if request.method == 'POST':
+        route_ship = get_object_or_404(RouteShip, pk=pk)
+        route_ship.order_completed = True
+        route_ship.save()
+        return redirect('route_ships_page')  # Перенаправляем на нужную страницу после изменения
+
+    return redirect('route_ships_page')  # Перенаправляем на нужную страницу в случае некорректного запроса
+
+
 
 
 
