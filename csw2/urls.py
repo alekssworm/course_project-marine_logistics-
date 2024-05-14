@@ -50,5 +50,6 @@ urlpatterns = [
      
      path('change_completed/<int:pk>/', change_completed, name='change_completed'),
      path('route_ships_page/', route_ships_page, name='route_ships_page'),
+     
 ]
 

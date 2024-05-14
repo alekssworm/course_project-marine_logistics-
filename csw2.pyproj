@@ -52,6 +52,7 @@
     <Folder Include="app\static\app\" />
     <Folder Include="app\static\app\content\" />
     <Folder Include="app\static\app\fonts\" />
+    <Folder Include="app\static\app\images\" />
     <Folder Include="app\static\app\scripts\" />
     <Folder Include="app\templates\" />
     <Folder Include="app\templates\app\" />
@@ -63,6 +64,18 @@
     <Content Include="app\static\app\content\nicepage.css" />
     <Content Include="app\static\app\content\авторизацыя.css" />
     <Content Include="app\static\app\content\main.css" />
+    <Content Include="app\static\app\images\0fd3416c.jpeg" />
+    <Content Include="app\static\app\images\1.jpg" />
+    <Content Include="app\static\app\images\149283.png" />
+    <Content Include="app\static\app\images\3.jpg" />
+    <Content Include="app\static\app\images\68f64b9d.jpeg" />
+    <Content Include="app\static\app\images\8ad73f3c.jpeg" />
+    <Content Include="app\static\app\images\cyberpunk.jpg" />
+    <Content Include="app\static\app\images\cyberpunk1.jpg" />
+    <Content Include="app\static\app\images\finish-line.png" />
+    <Content Include="app\static\app\images\id-card-for-office.png" />
+    <Content Include="app\static\app\images\img_ang.jpg" />
+    <Content Include="app\static\app\images\ukr_flag.png" />
     <Content Include="app\templates\app\admin_panel.html" />
     <Content Include="app\templates\app\area.html" />
     <Content Include="app\templates\app\edit_port.html" />

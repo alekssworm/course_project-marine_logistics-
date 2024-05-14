@@ -1,8 +1,15 @@
 ﻿
+
 from datetime import datetime
 from django.shortcuts import render
 from django.http import HttpRequest
 from datetime import date
+
+from django.utils import translation
+from django.shortcuts import redirect
+
+
+
 def home(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)
@@ -662,8 +669,7 @@ def change_completed(request, pk):
 
 
 
-import plotly.graph_objects as go
-import pandas as pd
+
 from django.shortcuts import render
 from .models import WritingAContract
 
@@ -741,7 +747,10 @@ def generate_vertical_bar_chart(df_contracts):
                       bargap=0.2)  # Adjust the bargap as needed
 
     return fig.to_html(full_html=False)
-
+import plotly.graph_objects as go
+import pandas as pd
+from django.shortcuts import render
+from .models import WritingAContract
 def statistics(request):
     payments = Payment.objects.all()
     ship_repairs = ShipRepair.objects.all()
