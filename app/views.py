@@ -266,7 +266,7 @@ def change_order_completed(request, route_id):
                 time_to_port = route.time_to_port
                 days_until_port = max((current_time - time_to_port).days, 1)
 
-                amount_crew = max(random.randint(600, 1000) * days_until_port * route.ship_table.crew, Decimal('0.00'))
+                amount_crew = max(random.randint(30, 100) * days_until_port * route.ship_table.crew, Decimal('0.00'))
 
                 # Create CrewPayment entry for the ship
                 CrewPayment.objects.create(
@@ -640,17 +640,40 @@ from django.shortcuts import render
 from .models import RouteShip
 
 def route_ships_page(request):
-    routes = RouteShip.objects.all()
-
-    # Группировка маршрутов по ключу маршрута
+    routes = RouteShip.objects.all().order_by('route_key', 'id')  # Убедитесь, что маршруты отсортированы корректно
     route_groups = {}
+
     for route in routes:
         route_key = route.route_key.split('-')[0]  # Получаем часть маршрута до тире
         if route_key not in route_groups:
-            route_groups[route_key] = {'route_key': route_key, 'routes': []}
+            route_groups[route_key] = {
+                'route_key': route_key,
+                'routes': [],
+                'has_completed_order': False,
+                'can_mark_completed': []  # Список флагов для каждого маршрута
+            }
+        
         route_groups[route_key]['routes'].append(route)
 
+        # Проверяем, выполнен ли заказ и обновляем состояние группы
+        if route.order_completed:
+            route_groups[route_key]['has_completed_order'] = True
+
+        # Определяем, можно ли пометить заказ как завершенный
+        if not route_groups[route_key]['routes'][-1].order_completed:
+            can_complete = all(r.order_completed for r in route_groups[route_key]['routes'][:-1])
+            route_groups[route_key]['can_mark_completed'].append(can_complete)
+        else:
+            route_groups[route_key]['can_mark_completed'].append(False)
+
+    # Подготовка данных для передачи в шаблон
+    for key, group in route_groups.items():
+        for i, route in enumerate(group['routes']):
+            route.can_mark_completed = group['can_mark_completed'][i]
+
     return render(request, 'app/route_ships_page.html', {'route_groups': route_groups.values()})
+
+
 
 
 from django.shortcuts import render, redirect, get_object_or_404
