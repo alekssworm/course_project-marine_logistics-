@@ -28,44 +28,18 @@
             <td>{{ route.time_to_port }}</td>
             <td>{{ route.order_completed }}</td>
             <td>
-                {% if forloop.first or route_group.routes|slice:":forloop.counter"|last|order_completed %}
+                
                 <form method="post" action="{% url 'change_completed' route.pk %}">
                     {% csrf_token %}
-
-                    <button type="submit" class="mark-completed-btn">Mark Completed</button>
-
+                    <button type="submit" {% if not route.can_mark_complete %}disabled{% endif %}>Mark Completed</button>
                 </form>
-                {% endif %}
+                
             </td>
         </tr>
         {% endfor %}
-
     </tbody>
 </table>
 {% endfor %}
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    var buttons = document.querySelectorAll('.mark-completed-btn');
-        buttons.forEach(function(button) {
-            button.addEventListener('click', function (event) {
-                processCompletion(this, event);
-            });
-    });
-});
-
-        function processCompletion(button, event) {
-    if (!button.closest('tr').previousElementSibling || button.closest('tr').previousElementSibling.querySelector('button').disabled) {
-            button.disabled = true;  
-    } else {
-            event.preventDefault();  
-        alert('Please complete previous steps first.');
-    }
-}
-</script>
-
-
-
 
 
 
@@ -85,12 +59,12 @@
         }
 
         .data-table th {
-            background - color: #f2f2f2;
+            background-color: #f2f2f2;
         }
 
         .data-table td[colspan="4"],
         .data-table td[colspan="5"] {
-            text - align: center;
+            text-align: center;
         }
 </style>
-    {% endblock %}
+{% endblock %}
