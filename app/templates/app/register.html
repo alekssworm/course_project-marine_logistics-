@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="registration-form-container">
-    <h2>Регистрация пользователя</h2>
+    <h2>User registration</h2>
     <form method="POST" action="{% url 'register' %}" class="registration-form">
         {% csrf_token %}
 
