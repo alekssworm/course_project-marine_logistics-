@@ -48,7 +48,7 @@ class Ship(models.Model):
     class Meta:
         db_table = 'ship_table'
         
-    from django.db import models
+from django.db import models
 from .models import Ship
 
 class CrewPayment(models.Model):

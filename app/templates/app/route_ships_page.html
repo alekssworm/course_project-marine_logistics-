@@ -3,7 +3,6 @@
 {% block content %}
 {% for route_group in route_groups %}
 <h3>{{ route_group.route_key }}</h3>
-<button id="toggleRouteShipsTable{{ route_group.route_key }}">Toggle Route Ships Table</button>
 <table class="data-table route-ships-table" id="routeShipsTable{{ route_group.route_key }}">
     <thead>
         <tr>
@@ -28,12 +27,12 @@
             <td>{{ route.time_to_port }}</td>
             <td>{{ route.order_completed }}</td>
             <td>
-                
+
                 <form method="post" action="{% url 'change_completed' route.pk %}">
                     {% csrf_token %}
                     <button type="submit" {% if not route.can_mark_complete %}disabled{% endif %}>Mark Completed</button>
                 </form>
-                
+
             </td>
         </tr>
         {% endfor %}

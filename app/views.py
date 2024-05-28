@@ -41,8 +41,9 @@ def about(request):
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from .models import Port, WritingAContract, ShippingCost, Payment
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import WritingAContract, Payment
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
@@ -115,6 +116,14 @@ def area(request):
 
     return render(request, 'app/area.html', {'contracts': contracts, 'ports': ports, 'payments': payments})
 
+def delete_contract(request, contract_id):
+    contract = get_object_or_404(WritingAContract, contract_id=contract_id)
+    if not contract.payments.filter(payment_made=True).exists():
+        contract.delete()
+    return redirect('area')  
+
+
+
 
 
 from django.contrib.auth import authenticate, login
@@ -173,6 +182,8 @@ def register(request):
     else:
         form = RegisterForm()
     return render(request, 'app/register.html', {'form': form})
+
+
 
 
 
@@ -249,24 +260,28 @@ from .models import RouteShip, CrewPayment ,WritingAContract
 
 from django.shortcuts import get_object_or_404
 
-from django.shortcuts import get_object_or_404
+from decimal import Decimal
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.utils import timezone
+from .models import RouteShip, CrewPayment, Ship
 
 def change_order_completed(request, route_id):
     try:
-        route = RouteShip.objects.get(pk=route_id)
+        route = get_object_or_404(RouteShip, pk=route_id)
 
         if not route.order_completed:
             route.order_completed = True
             route.save()
-            
+
             # Check if order_completed is set to True and ship exists
             if route.order_completed and route.ship_table:
                 # Calculate amount_crew based on random value, time_to_port, and crew size
-                current_time = timezone.now() 
+                current_time = timezone.now()
                 time_to_port = route.time_to_port
                 days_until_port = max((current_time - time_to_port).days, 1)
 
-                amount_crew = max(random.randint(30, 100) * days_until_port * route.ship_table.crew, Decimal('0.00'))
+                amount_crew = max(random.randint(10, 90) * days_until_port * route.ship_table.crew, Decimal('0.00'))
 
                 # Create CrewPayment entry for the ship
                 CrewPayment.objects.create(
@@ -279,6 +294,8 @@ def change_order_completed(request, route_id):
                                           f'CrewPayment has been created with amount_crew={amount_crew}.')
             else:
                 messages.warning(request, f'Route {route.route_key} is already marked as completed.')
+        else:
+            messages.warning(request, f'Route {route.route_key} was already marked as completed.')
     except RouteShip.DoesNotExist:
         messages.error(request, 'Route does not exist.')
 
@@ -672,9 +689,9 @@ def change_completed(request, pk):
         route_ship = get_object_or_404(RouteShip, pk=pk)
         route_ship.order_completed = True
         route_ship.save()
-        return redirect('route_ships_page')  # Перенаправляем на нужную страницу после изменения
+        return redirect('route_ships_page')  
 
-    return redirect('route_ships_page')  # Перенаправляем на нужную страницу в случае некорректного запроса
+    return redirect('route_ships_page') 
 
 
 

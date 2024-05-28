@@ -37,7 +37,7 @@ urlpatterns = [
     path('delete_ship/<int:ship_id>/', views.delete_ship, name='delete_ship'),
     path('edit_port/<int:port_id>/', views.edit_port, name='edit_port'),
     path('edit_ship/<int:ship_id>/', views.edit_ship, name='edit_ship'),
-    
+    path('delete_contract/<int:contract_id>/', views.delete_contract, name='delete_contract'),
     path('pay_payment/<int:payment_id>/', views.area, name='pay_payment'),
     path('statistics/', statistics, name='statistics'),
     
@@ -48,7 +48,7 @@ urlpatterns = [
     path('change_order_completed/<int:route_id>/', change_order_completed, name='change_order_completed'),
 
      
-     path('change_completed/<int:pk>/', change_completed, name='change_completed'),
+     path('change_completed/<int:route_id>/', change_order_completed, name='change_completed'),
      path('route_ships_page/', route_ships_page, name='route_ships_page'),
      
 ]

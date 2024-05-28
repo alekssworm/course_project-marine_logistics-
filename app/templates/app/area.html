@@ -292,7 +292,6 @@
 
 
             <table class="data-table contracts-table">
-
                 <thead>
                     <tr>
                         <th>Contract ID</th>
@@ -303,6 +302,7 @@
                         <th>Temperature Mode</th>
                         <th>In Work</th>
                         <th>Completion</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -316,11 +316,19 @@
                         <td>{{ contract.temperature_mode }}</td>
                         <td>{{ contract.in_work }}</td>
                         <td>{{ contract.completed }}</td>
+                        <td>
+                            {% if not contract.payments.exists or not contract.payments.first.payment_made %}
+                            <a href="{% url 'delete_contract' contract.contract_id %}" onclick="return confirm('Are you sure you want to delete this contract?')">Delete</a>
+                            {% else %}
+                            No actions available
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
-
             </table>
+
+
 
             <h2>List Payment</h2>
             <table class="list-payment-table">

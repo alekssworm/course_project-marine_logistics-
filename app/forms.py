@@ -45,4 +45,10 @@ class EditShipForm(forms.ModelForm):
         model = Ship
         fields = ['name_of_vessel', 'ship_tonnage', 'ship_type', 'home_port', 'average_speed','crew']  # Adjust fields as needed
 
+from django import forms
+from .models import WritingAContract
 
+class EditContractForm(forms.ModelForm):
+    class Meta:
+        model = WritingAContract
+        fields = ['cargo_quantity', 'type_of_cargo', 'port_id_with_cargo', 'port_final_destination', 'temperature_mode', 'in_work', 'completed']
