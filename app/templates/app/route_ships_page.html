@@ -27,18 +27,17 @@
             <td>{{ route.time_to_port }}</td>
             <td>{{ route.order_completed }}</td>
             <td>
-
                 <form method="post" action="{% url 'change_completed' route.pk %}">
                     {% csrf_token %}
                     <button type="submit" {% if not route.can_mark_complete %}disabled{% endif %}>Mark Completed</button>
                 </form>
-
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% endfor %}
+
 
 
 

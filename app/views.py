@@ -281,7 +281,7 @@ def change_order_completed(request, route_id):
                 time_to_port = route.time_to_port
                 days_until_port = max((current_time - time_to_port).days, 1)
 
-                amount_crew = max(random.randint(10, 90) * days_until_port * route.ship_table.crew, Decimal('0.00'))
+                amount_crew = max(random.randint(80, 300) * days_until_port * route.ship_table.crew, Decimal('0.00'))
 
                 # Create CrewPayment entry for the ship
                 CrewPayment.objects.create(
@@ -438,32 +438,35 @@ def ship_view (request):
 
     return render(request, 'app/ship.html', context)
 
-from django.contrib import messages
-
+from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
+from .models import Assignment, WritingAContract, Ship, Port, RouteShip, CrewPayment
+from django.utils import timezone
+from geopy.distance import geodesic
+from datetime import timedelta
+from django.db import transaction
+@csrf_exempt
 def admin_panel(request):
-    
     # Data Retrieval
     ships = Ship.objects.all()
     ports = Port.objects.all()
     contracts = WritingAContract.objects.all()
     crew  = CrewPayment.objects.all()
     routes = RouteShip.objects.all()
-    ship_id = None
     assignments = Assignment.objects.all()
     paid_contracts = WritingAContract.objects.filter(payments__payment_made=True)
-    if request.method == 'POST':
 
-        
+    if request.method == 'POST':
+        # Обработка формы для создания маршрутов
         if 'create_route_ships' in request.POST:
             ship_id = request.POST.get('ship_id')
             if ship_id:
-               ship_id = int(ship_id)
-               create_route_ships_logic(ship_id, generate_route_key)
-               return redirect('admin_panel')
+                ship_id = int(ship_id)
+                create_route_ships_logic(ship_id)
+                return redirect('admin_panel')
 
-             # Обработка формы для Port
-
-        if 'contract_form' in request.POST:
+        # Обработка формы для Port
+        elif 'contract_form' in request.POST:
             cargo_quantity = request.POST.get('cargo_quantity')
             type_of_cargo = request.POST.get('type_of_cargo')
             port_id_with_cargo = request.POST.get('port_id_with_cargo')
@@ -485,12 +488,14 @@ def admin_panel(request):
                 completed=completed,
                 user_id=user
             )
-        
-        elif 'assignment_form' in request.POST:
-             contract_id = request.POST.get('contract')
-             ship_table_id = request.POST.get('ship_table')
+            return redirect('admin_panel')
 
-             try:
+        # Обработка формы для создания задания
+        elif 'assignment_form' in request.POST:
+            contract_id = request.POST.get('contract')
+            ship_table_id = request.POST.get('ship_table')
+
+            try:
                 contract = WritingAContract.objects.get(pk=contract_id, completed=False)
                 ship_table = Ship.objects.get(pk=ship_table_id)
 
@@ -498,24 +503,20 @@ def admin_panel(request):
                 current_load = ship_table.ship_tonnage if not latest_assignment else latest_assignment.vessel_load_calculation
                 new_load = max(0, current_load - contract.cargo_quantity)
 
-                print("Contract:", contract)
-                print("Ship Table:", ship_table)
-                print("New Vessel Load Calculation:", new_load)
-
                 Assignment.objects.create(
-                   contract=contract,
-                   ship_table=ship_table,
-                  vessel_load_calculation=new_load
+                    contract=contract,
+                    ship_table=ship_table,
+                    vessel_load_calculation=new_load
                 )
                 contract.in_work = True
                 contract.save()
 
-             except (WritingAContract.DoesNotExist, Ship.DoesNotExist) as e:
+            except (WritingAContract.DoesNotExist, Ship.DoesNotExist) as e:
                 print("Error:", e)
                 return redirect('admin_panel')
 
-             
-        
+            return redirect('admin_panel')
+
         # Обработка формы для RouteShip
         elif 'route_form' in request.POST:
             ship_table = request.POST.get('ship_table')
@@ -533,45 +534,44 @@ def admin_panel(request):
                 time_to_port=time_to_port,
                 order_completed=order_completed
             )
-                    # Получение объекта судна для обработки
-            ship = Ship.objects.get(pk=ship_table_id)
+
+            return redirect('admin_panel')
 
     # Context Preparation
     context = {
-
         'routes': routes,
-         'CrewPayment': CrewPayment,
-         'assignments': assignments,
-         'contracts': paid_contracts,
-         'ships': ships,
-         'ports': ports
-
+        'CrewPayment': CrewPayment,
+        'assignments': assignments,
+        'contracts': paid_contracts,
+        'ships': ships,
+        'ports': ports
     }
 
     return render(request, 'app/admin_panel.html', context)
-   
-
 
 
 
 from django.shortcuts import render, redirect
-from .models import Port, Ship, WritingAContract, Assignment, RouteShip
+from django.views.decorators.csrf import csrf_exempt
+from .models import Assignment, WritingAContract, Ship, Port, RouteShip, CrewPayment
 from django.utils import timezone
 from geopy.distance import geodesic
 from datetime import timedelta
-
-from django.db.models import Sum
-
 from django.db import transaction
-from django.db.models import Max
 
+
+def generate_new_path_index():
+    last_route = RouteShip.objects.order_by('-route_key').first()
+    if not last_route:
+        return 1
+    else:
+        last_route_parts = last_route.route_key.split('-')
+        return int(last_route_parts[0]) + 1 if len(last_route_parts) > 0 else 1
 
 def generate_route_key(path_index, stop_index):
-    return f"{stop_index}-{path_index}"
+    return f"{path_index}-{stop_index}"
 
-
-
-def create_route_ships_logic(ship_id, generate_route_key):
+def create_route_ships_logic(ship_id):
     ship = Ship.objects.get(pk=ship_id)
     contracts = WritingAContract.objects.filter(
         assignment__ship_table=ship,
@@ -579,38 +579,45 @@ def create_route_ships_logic(ship_id, generate_route_key):
     ).order_by('contract_id').distinct()
 
     with transaction.atomic():
-        last_route = RouteShip.objects.filter(ship_table=ship).order_by('-route_key').first()
-
-        if not last_route:
-            path_index = 1
-        else:
-            last_route_parts = last_route.route_key.split('-')
-            path_index = int(last_route_parts[0]) + 1 if len(last_route_parts) > 0 else 1
-
+        path_index = generate_new_path_index()
         last_time_to_port = timezone.now()
         created_paths = set()
+
+        stop_index = 1  # Сбросить stop_index до 1 для нового вызова create_route_ships_logic
 
         for contract in contracts:
             current_path = f"{contract.port_id_with_cargo_id}-{contract.port_final_destination_id}"
 
             if current_path not in created_paths:
-                stop_index = 1
                 if ship.home_port_id != contract.port_id_with_cargo_id:
-                    last_time_to_port, stop_index, path_index = create_route(ship, ship.home_port_id, contract.port_id_with_cargo_id, last_time_to_port, path_index, stop_index, generate_route_key)
+                    last_time_to_port, stop_index = create_route(
+                        ship, 
+                        ship.home_port_id, 
+                        contract.port_id_with_cargo_id, 
+                        last_time_to_port, 
+                        path_index, 
+                        stop_index, 
+                        generate_route_key
+                    )
 
-                last_time_to_port, stop_index, path_index = create_route(ship, contract.port_id_with_cargo_id, contract.port_final_destination_id, last_time_to_port, path_index, stop_index, generate_route_key)
+                if stop_index > 1:  # Пропустить создание маршрутов с расстоянием 0
+                    last_time_to_port, stop_index = create_route(
+                        ship, 
+                        contract.port_id_with_cargo_id, 
+                        contract.port_final_destination_id, 
+                        last_time_to_port, 
+                        path_index, 
+                        stop_index, 
+                        generate_route_key
+                    )
 
                 ship.home_port_id = contract.port_final_destination_id
                 created_paths.add(current_path)
-
-        # Здесь path_index увеличивается на 1 для каждого нового маршрута
-        path_index += 1
 
         assignments_to_delete = Assignment.objects.filter(ship_table_id=ship_id)
         assignments_to_delete.delete()
 
     return redirect('admin_panel')
-
 
 def create_route(ship, from_port_id, to_port_id, last_time_to_port, path_index, stop_index, generate_route_key):
     from_port = Port.objects.get(pk=from_port_id)
@@ -622,12 +629,11 @@ def create_route(ship, from_port_id, to_port_id, last_time_to_port, path_index, 
     distance = geodesic(from_coords, to_coords).kilometers
     voyage_duration = calculate_voyage_duration(distance, ship.average_speed)
 
+    if distance == 0:  # Пропустить создание маршрутов с расстоянием 0
+        return last_time_to_port, stop_index
+
     time_to_port = last_time_to_port + timedelta(hours=voyage_duration)
     route_key = generate_route_key(path_index, stop_index)
-
-    while RouteShip.objects.filter(route_key=route_key).exists():
-        stop_index += 1
-        route_key = generate_route_key(path_index, stop_index)
 
     RouteShip.objects.create(
         ship_table=ship,
@@ -639,10 +645,10 @@ def create_route(ship, from_port_id, to_port_id, last_time_to_port, path_index, 
         route_key=route_key
     )
 
-    # Увеличиваем path_index при каждом новом маршруте
-    path_index += 1
+    # Увеличиваем stop_index при каждом новом остановочном пункте
+    stop_index += 1
 
-    return time_to_port, stop_index, path_index
+    return time_to_port, stop_index
 
 
 def calculate_voyage_duration(distance, average_speed):
@@ -650,34 +656,46 @@ def calculate_voyage_duration(distance, average_speed):
     return distance / average_speed_float if average_speed_float else 0
 
 
+
 def route_ships_page(request):
-    routes = RouteShip.objects.all().order_by('route_key')  # Ensure they are ordered by route_key
+    routes = RouteShip.objects.all().order_by('route_key')
     route_groups = {}
 
     for route in routes:
-        route_key_main = route.route_key.split('-')[0]
+        route_key_parts = route.route_key.split('-')
+        route_key_main = route_key_parts[0]
+        route_key_index = int(route_key_parts[1])
+
         if route_key_main not in route_groups:
             route_groups[route_key_main] = {
-                'route_key': route_key_main, 'routes': [],
-                'has_completed_order': False, 'first_incomplete_index': None
+                'route_key': route_key_main,
+                'routes': [],
+                'first_incomplete_index': None
             }
 
         route_group = route_groups[route_key_main]
-        route_index = int(route.route_key.split('-')[1])
 
-        # Check and mark the first incomplete route
         if not route.order_completed and route_group['first_incomplete_index'] is None:
-            route_group['first_incomplete_index'] = route_index
+            route_group['first_incomplete_index'] = route_key_index
 
         route.can_mark_complete = (
-            route_group['first_incomplete_index'] == route_index and not route.order_completed
+            route_group['first_incomplete_index'] == route_key_index and not route.order_completed
         )
-        route_groups[route_key_main]['routes'].append(route)
 
-        if route.order_completed:
-            route_groups[route_key_main]['has_completed_order'] = True
+        route_groups[route_key_main]['routes'].append({
+            'index': route_key_index,
+            'route': route
+        })
 
-    return render(request, 'app/route_ships_page.html', {'route_groups': route_groups.values()})
+    for route_group in route_groups.values():
+        route_group['routes'] = sorted(route_group['routes'], key=lambda x: x['index'])
+        route_group['routes'] = [item['route'] for item in route_group['routes']]
+
+    sorted_route_groups = sorted(route_groups.values(), key=lambda x: int(x['route_key']))
+
+    return render(request, 'app/route_ships_page.html', {'route_groups': sorted_route_groups})
+
+
 
 
 
@@ -692,9 +710,6 @@ def change_completed(request, pk):
         return redirect('route_ships_page')  
 
     return redirect('route_ships_page') 
-
-
-
 
 
 

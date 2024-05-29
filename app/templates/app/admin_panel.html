@@ -47,7 +47,6 @@
     </tbody>
 </table>
 
-
 <h2>Create Assignment</h2>
 <form method="post">
     {% csrf_token %}
@@ -125,7 +124,7 @@
             <th>Voyage Duration</th>
             <th>Time to Port</th>
             <th>Order Completed</th>
-            
+
         </tr>
     </thead>
     <tbody>
@@ -138,7 +137,7 @@
             <td>{{ route.voyage_duration }}</td>
             <td>{{ route.time_to_port }}</td>
             <td>{{ route.order_completed }}</td>
-            
+
         </tr>
         {% empty %}
         <tr>
